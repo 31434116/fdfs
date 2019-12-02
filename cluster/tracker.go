@@ -18,7 +18,7 @@ type Tracker struct {
 // NewTracker creates a client to access tracker node. It uses a blocking pool
 // to manage net connection. So created connection can be precisely controlled.
 // Note that if some config items are not set, default config will be used.
-func NewTracker(address string, config TrackerConfig) (*Tracker, *Error) {
+func NewTracker(address string, config TrackerConfig) (*Tracker, error) {
 	t := &Tracker{address: address}
 	p, err := pool.NewBlockingPool(address, config.PoolConfig, nil)
 	if err != nil {
@@ -41,7 +41,7 @@ type TrackerStoreInfo struct {
 }
 
 // cast receive bytes to TrackerStoreInfo
-func (tsi *TrackerStoreInfo) cast(recv []byte, containPath bool) *Error {
+func (tsi *TrackerStoreInfo) cast(recv []byte, containPath bool) error {
 	if containPath {
 		if len(recv) != TRACKER_QUERY_STORAGE_STORE_BODY_LEN {
 			return unexpectedPkgLenErr(len(recv), TRACKER_QUERY_STORAGE_STORE_BODY_LEN)
@@ -61,7 +61,7 @@ func (tsi *TrackerStoreInfo) cast(recv []byte, containPath bool) *Error {
 }
 
 // QueryUploadStorage query group upload storage info for update
-func (t *Tracker) QueryUploadStorage(group string) (*TrackerStoreInfo, *Error) {
+func (t *Tracker) QueryUploadStorage(group string) (*TrackerStoreInfo, error) {
 	//get a connection from pool
 	conn, e := t.pool.Get()
 	if e != nil {
@@ -94,17 +94,17 @@ func (t *Tracker) QueryUploadStorage(group string) (*TrackerStoreInfo, *Error) {
 }
 
 // QueryUpdateStorage query storage info for update actions like delete and append
-func (t *Tracker) QueryUpdateStorage(group, filename string) (*TrackerStoreInfo, *Error) {
+func (t *Tracker) QueryUpdateStorage(group, filename string) (*TrackerStoreInfo, error) {
 	return t.queryFileStorage(group, filename, TRACKER_PROTO_CMD_SERVICE_QUERY_UPDATE)
 }
 
 // QueryDownloadStorage query storage info for download
-func (t *Tracker) QueryDownloadStorage(group, filename string) (*TrackerStoreInfo, *Error) {
+func (t *Tracker) QueryDownloadStorage(group, filename string) (*TrackerStoreInfo, error) {
 	return t.queryFileStorage(group, filename, TRACKER_PROTO_CMD_SERVICE_QUERY_FETCH_ONE)
 }
 
 // Query stroage info using filename with specific command
-func (t *Tracker) queryFileStorage(group, filename string, cmd byte) (*TrackerStoreInfo, *Error) {
+func (t *Tracker) queryFileStorage(group, filename string, cmd byte) (*TrackerStoreInfo, error) {
 	//get a connection from pool
 	conn, e := t.pool.Get()
 	if e != nil {
@@ -144,9 +144,9 @@ func (t *Tracker) Update(config TrackerConfig) {
 }
 
 // wrapError wrap tracker relevant header to the error name
-func (t *Tracker) wrapError(err *Error) *Error {
+func (t *Tracker) wrapError(err error) error {
 	if err == nil {
 		return err
 	}
-	return err.Wrap("Tracker:" + t.address)
+	return fmt.Errorf("Tracker: %s [%w]", t.address, err)
 }

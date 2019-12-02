@@ -28,7 +28,7 @@ type Storage struct {
 // NewStorage creates a client to access storage node. It uses a blocking pool
 // to manage net connection. So created connection can be precisely controlled.
 // Note that if some config items are not set, default config will be used.
-func NewStorage(address, group string, config StorageConfig) (*Storage, *Error) {
+func NewStorage(address, group string, config StorageConfig) (*Storage, error) {
 	s := &Storage{
 		address: address,
 		group:   group,
@@ -43,7 +43,7 @@ func NewStorage(address, group string, config StorageConfig) (*Storage, *Error) 
 }
 
 // Append bytes to the file
-func (s *Storage) Append(b []byte, filename string) *Error {
+func (s *Storage) Append(b []byte, filename string) error {
 	//get a connetion from pool
 	conn, e := s.pool.Get()
 	if e != nil {
@@ -74,7 +74,7 @@ func (s *Storage) Append(b []byte, filename string) *Error {
 }
 
 // Delete file
-func (s *Storage) Delete(filename string) *Error {
+func (s *Storage) Delete(filename string) error {
 	//get a connetion from pool
 	conn, e := s.pool.Get()
 	if e != nil {
@@ -112,7 +112,7 @@ func (s *Storage) setDownloadSizeLimit(limit int64) {
 }
 
 // Download length bytes of file from offset
-func (s *Storage) Download(filename string, offset, length int64) ([]byte, *Error) {
+func (s *Storage) Download(filename string, offset, length int64) ([]byte, error) {
 	//get a connetion from pool
 	conn, e := s.pool.Get()
 	if e != nil {
@@ -153,7 +153,7 @@ func (s *Storage) Update(config StorageConfig) {
 }
 
 // Upload a file to the storage path.
-func (s *Storage) Upload(b []byte, pathIndex byte, ext string, allowAppend bool) (string, *Error) {
+func (s *Storage) Upload(b []byte, pathIndex byte, ext string, allowAppend bool) (string, error) {
 	//get a connetion from pool
 	conn, e := s.pool.Get()
 	if e != nil {
@@ -187,7 +187,7 @@ func (s *Storage) Upload(b []byte, pathIndex byte, ext string, allowAppend bool)
 }
 
 // Upload a slave file. Slave file id is {master}{suffix}.{ext}
-func (s *Storage) UploadSlave(b []byte, master, suffix, ext string) (string, *Error) {
+func (s *Storage) UploadSlave(b []byte, master, suffix, ext string) (string, error) {
 	//get a connetion from pool
 	conn, e := s.pool.Get()
 	if e != nil {
@@ -227,7 +227,7 @@ func (s *Storage) UploadSlave(b []byte, master, suffix, ext string) (string, *Er
 }
 
 // parseFid parse receive bytes to group and name
-func (s *Storage) parseFid(recv []byte) (string, *Error) {
+func (s *Storage) parseFid(recv []byte) (string, error) {
 	// #recv_fmt |-group_name(16)-filename|
 	if len(recv) < FDFS_GROUP_NAME_MAX_LEN {
 		return "", s.wrapError(unexpectedPkgLenErr(len(recv), FDFS_GROUP_NAME_MAX_LEN))
@@ -238,9 +238,9 @@ func (s *Storage) parseFid(recv []byte) (string, *Error) {
 }
 
 // wrapError wrap storage group and address to the error
-func (s *Storage) wrapError(err *Error) *Error {
+func (s *Storage) wrapError(err error) error {
 	if err == nil {
 		return err
 	}
-	return err.Wrap(fmt.Sprintf("Storage_%s:%s", s.group, s.address))
+	return fmt.Errorf("Storage_%s:%s [%w]", s.group, s.address, err)
 }

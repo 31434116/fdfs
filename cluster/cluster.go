@@ -108,7 +108,7 @@ func Delete(fid string) error {
 }
 
 // Delete the file in this cluster.
-func (c *Cluster) Delete(fid string) *Error {
+func (c *Cluster) Delete(fid string) error {
 	group, filename, err := c.splitFid(fid)
 	if err != nil {
 		return err
@@ -139,7 +139,7 @@ func (c *Cluster) Download(fid string) ([]byte, error) {
 }
 
 // DownloadFromOffset download length bytes from offset
-func (c *Cluster) DownloadFromOffset(fid string, offset, length int64) ([]byte, *Error) {
+func (c *Cluster) DownloadFromOffset(fid string, offset, length int64) ([]byte, error) {
 	//split file id to two parts: group name and file name
 	group, filename, err := c.splitFid(fid)
 	if err != nil {
@@ -174,7 +174,7 @@ func (c *Cluster) StorageGroup(group string) (*StorageGroup, bool) {
 }
 
 // Storage return a stored or create a new storage based on TrackerStoreInfo.
-func (c *Cluster) Storage(info *TrackerStoreInfo) (*Storage, *Error) {
+func (c *Cluster) Storage(info *TrackerStoreInfo) (*Storage, error) {
 	sg, ok := c.StorageGroup(info.Group)
 	if !ok {
 		sg = NewStorageGroup(info.Group, c.storageBaseConfig)
@@ -234,7 +234,7 @@ func (c *Cluster) UpdateTracker(config TrackerConfig) {
 	}
 }
 
-func (c *Cluster) upload(b []byte, group, ext string, allowAppend bool) (string, *Error) {
+func (c *Cluster) upload(b []byte, group, ext string, allowAppend bool) (string, error) {
 	//query a upload server from tracker
 	t := c.Tracker()
 	info, err := t.QueryUploadStorage(group)
@@ -308,7 +308,7 @@ func (c *Cluster) UploadSlave(b []byte, master, suffix, ext string) (string, err
 }
 
 // splitFid split file id to group name and file name
-func (c *Cluster) splitFid(fid string) (string, string, *Error) {
+func (c *Cluster) splitFid(fid string) (string, string, error) {
 	s := strings.SplitN(fid, "/", 2)
 	if len(s) < 2 {
 		return "", "", c.wrapError(wrongFidErr(fid))
@@ -318,9 +318,9 @@ func (c *Cluster) splitFid(fid string) (string, string, *Error) {
 }
 
 // wrapError wrap cluster name to error
-func (c *Cluster) wrapError(err *Error) *Error {
+func (c *Cluster) wrapError(err error) error {
 	if err == nil {
 		return nil
 	}
-	return err.Wrap(c.name)
+	return fmt.Errorf("%s: [%w]", c.name, err)
 }
