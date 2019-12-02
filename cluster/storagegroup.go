@@ -39,7 +39,7 @@ func (sg *StorageGroup) Add(s *Storage) *StorageGroup {
 // BaseConfig return group shared base storage config.
 func (sg *StorageGroup) BaseConfig() StorageConfig {
 	sg.mtx.RLock()
-	defer sg.mtx.RLock()
+	defer sg.mtx.RUnlock()
 
 	return sg.base
 }
