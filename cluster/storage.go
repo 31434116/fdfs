@@ -2,7 +2,7 @@ package cluster
 
 import (
 	"encoding/binary"
-	"path/filepath"
+	"path"
 
 	"fmt"
 	"github.com/giantpoplar/pool"
@@ -234,7 +234,7 @@ func (s *Storage) parseFid(recv []byte) (string, error) {
 	}
 	group := stripString(string(recv[0:FDFS_GROUP_NAME_MAX_LEN]))
 	name := string(recv[FDFS_GROUP_NAME_MAX_LEN:])
-	return filepath.Join(group, name), nil
+	return path.Join(group, name), nil
 }
 
 // wrapError wrap storage group and address to the error

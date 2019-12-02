@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"sync"
